@@ -1,11 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import * as yup from "yup";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import InputPasswordToggle from "@components/input-password-toggle";
 import Select from "react-select";
-import { selectThemeColors } from "../utility/Utils";
+import classnames from "classnames";
 import {
+  getHomeRouteForLoggedInUser,
+  selectThemeColors,
+} from "../utility/Utils";
+import {
+  Alert,
   Card,
   CardBody,
   CardTitle,
@@ -20,11 +25,25 @@ import {
 } from "reactstrap";
 import "@styles/base/pages/page-auth.scss";
 import axios from "axios";
+import { API_URL } from "../configs/constants";
+import useJwt from "@src/auth/jwt/useJwt";
+import { useState } from "react";
+import jwt_decode from "jwt-decode";
+import { handleLogin } from "@store/actions/auth";
+import { useDispatch } from "react-redux";
 
 const Login = () => {
+  const dispatch = useDispatch();
+  const history = useHistory();
+  const [responseError, setResponseError] = useState({ error: "" });
+
   //-----schema type for validation--------
   const SignupSchema = yup.object().shape({
-    accountType: yup.string(),
+    accountType: yup
+      .mixed()
+      .test("Required", "Please select your Registered As", (value) => {
+        return value.value ? true : false;
+      }),
     loginEmail: yup.string().required("Please enter your Email ID"),
     loginPassword: yup.string().required("Please enter your password"),
   });
@@ -34,16 +53,38 @@ const Login = () => {
     timeout: 5000,
     maximumAge: 0,
   };
-  async function success(pos) {
+  const success = (data) => async (pos) => {
     var crd = pos.coords;
+
     try {
-      const result = await axios.get(
-        `https://us1.locationiq.com/v1/reverse.php?key=pk.011ef9c25ec3659bc3886f30b449e804&lat=${crd.latitude}&lon=${crd.longitude}&format=json`
-      );
-      console.log(result);
+      const result = await useJwt.login({
+        email: data.loginEmail,
+        password: data.loginPassword,
+      });
+
+      const { email, userId } = jwt_decode(result.data.token);
+      dispatch(handleLogin({ email, userId, token: result.data.token }));
+      history.push("/");
     } catch (error) {
-      console.log(error);
+      if (error.response && error.response.status === 401) {
+        setResponseError({ error: error.response.data.errors[0].msg });
+      }
     }
+
+    // try {
+    // const result = await axios.get(
+    //   `https://us1.locationiq.com/v1/reverse.php?key=pk.011ef9c25ec3659bc3886f30b449e804&lat=${crd.latitude}&lon=${crd.longitude}&format=json`
+    // );
+    //   console.log(data);
+    //   const result = await axios.post(`${API_URL}/users/login`, {
+    //     email: data.loginEmail,
+    //     password: data.loginPassword,
+    //   });
+    //   console.log(result.data);
+    // } catch (error) {
+    //   console.log(error.response.data);
+    // }
+
     // const google = window.google;
     // var latlng = new google.maps.LatLng(crd.latitude, crd.longitude);
     // // This is making the Geocode request
@@ -63,18 +104,14 @@ const Login = () => {
     // console.log(`Latitude : ${crd.latitude}`);
     // console.log(`Longitude: ${crd.longitude}`);
     // console.log(`More or less ${crd.accuracy} meters.`);
-  }
+  };
 
   function locationErrors(err) {
     console.warn(`ERROR(${err.code}): ${err.message}`);
   }
 
-  // const colourOptions = [
-  //   { value: "bidder/all", label: "Bidder/All" },
-  //   { value: "bankers/viewers", label: "Bankers/Viewers" },
-  // ];
-
-  const { register, errors, handleSubmit } = useForm({
+  //--------------use form---------------
+  const { register, errors, handleSubmit, control } = useForm({
     mode: "onChange",
     resolver: yupResolver(SignupSchema),
   });
@@ -85,10 +122,10 @@ const Login = () => {
         .query({ name: "geolocation" })
         .then(function (result) {
           if (result.state === "granted") {
-            console.log(result.state);
-            console.log(data);
+            // console.log(result.state);
+            // console.log(data);
             //If granted then you can directly call your function here
-            navigator.geolocation.getCurrentPosition(success);
+            navigator.geolocation.getCurrentPosition(success(data));
           } else if (result.state === "prompt") {
             navigator.geolocation.getCurrentPosition(
               success,
@@ -107,6 +144,12 @@ const Login = () => {
       alert("Sorry Not available!");
     }
   };
+
+  //-------account type options--------
+  const accountTypeOptions = [
+    { value: "Bidder/All", label: "Bidder/All" },
+    { value: "Bankers/Viewers", label: "Bankers/Viewers" },
+  ];
 
   return (
     <div className="auth-wrapper auth-v1 px-2">
@@ -205,17 +248,29 @@ const Login = () => {
             >
               <FormGroup>
                 <FormGroup>
-                  <Input
+                  {/* <Input
                     type="select"
                     name="accountType"
                     id="accountType"
                     innerRef={register({ required: true })}
-                  >
-                    <option value="Bidder/All" defaultValue>
-                      Bidder/All
-                    </option>
-                    <option value="Bankers/Viewers">Bankers/Viewers</option>
-                  </Input>
+                  > */}
+                  <Controller
+                    as={Select}
+                    id="accountType"
+                    control={control}
+                    name="accountType"
+                    options={accountTypeOptions}
+                    defaultValue={accountTypeOptions[0]}
+                    className={classnames("react-select", {
+                      "is-invalid": errors.accountType && true,
+                    })}
+                    classNamePrefix="select"
+                    theme={selectThemeColors}
+                  />
+
+                  {errors && errors.accountType && (
+                    <FormFeedback>{errors.accountType.message}</FormFeedback>
+                  )}
                 </FormGroup>
               </FormGroup>
               <FormGroup>
@@ -259,14 +314,19 @@ const Login = () => {
                   </div>
                 )}
               </FormGroup>
-              <FormGroup>
+              {responseError.error && (
+                <Alert color="danger" className="text-center">
+                  {responseError.error}
+                </Alert>
+              )}
+              {/* <FormGroup>
                 <CustomInput
                   type="checkbox"
                   className="custom-control-Primary"
                   id="remember-me"
                   label="Remember Me"
                 />
-              </FormGroup>
+              </FormGroup> */}
               <Button.Ripple type="submit" color="primary" block>
                 Sign in
               </Button.Ripple>

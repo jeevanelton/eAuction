@@ -1,8 +1,10 @@
 import * as yup from "yup";
-import { Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import InputPassword from "@components/input-password-toggle";
+import Select from "react-select";
+import classnames from "classnames";
+import { selectThemeColors } from "@utils";
 import {
   Row,
   Col,
@@ -19,10 +21,13 @@ import {
   CustomInput,
 } from "reactstrap";
 import { useState } from "react";
+import { API_URL } from "../configs/constants";
+import useJwt from "@src/auth/jwt/useJwt";
+import { Link } from "react-router-dom";
 
 const Registration = () => {
   const [radioButtonValues, setRadioButtonValues] = useState({
-    panOrformDetails: "panNo",
+    panOrForm16: "Pan",
   });
 
   //--setting file size----
@@ -39,18 +44,16 @@ const Registration = () => {
 
   //-----schema type for validation--------
   const SignupSchema = yup.object().shape({
-    emailId: yup
+    email: yup
       .string()
       .email("Please enter a valid Email")
       .required("Please enter your Email ID"),
     confirmEmail: yup
       .string()
       .required("Please confirm your Email ID")
-      .when("emailId", {
-        is: (emailId) => (emailId && emailId.length > 0 ? true : false),
-        then: yup
-          .string()
-          .oneOf([yup.ref("emailId")], "Email ID doesn't match"),
+      .when("email", {
+        is: (email) => (email && email.length > 0 ? true : false),
+        then: yup.string().oneOf([yup.ref("email")], "Email ID doesn't match"),
       }),
 
     password: yup
@@ -76,11 +79,25 @@ const Registration = () => {
       .required("Please enter your Father's / Husband Name"),
     address1: yup.string().required("Please enter your Address"),
     address2: yup.string(),
-    country: yup.string().required("Please select your Country"),
-    state: yup.string().required("Please select your State"),
-    city: yup.string().required("Please select your City"),
-    registerAs: yup.string().required("Please select Register As"),
-    pinOrZip: yup
+    country: yup
+      .mixed()
+      .test("Required", "Please select your country", (value) => {
+        return value.value ? true : false;
+      }),
+    state: yup.mixed().test("Required", "Please select your State", (value) => {
+      return value.value ? true : false;
+    }),
+    city: yup
+      .mixed()
+      .test("Required", "Please select your Country", (value) => {
+        return value.value ? true : false;
+      }),
+    registerAs: yup
+      .mixed()
+      .test("Required", "Please select your Registered As", (value) => {
+        return value.value ? true : false;
+      }),
+    pincode: yup
       .mixed()
       .test("Required", "Please enter your Pin / Zip", (value) => {
         return value ? true : false;
@@ -90,30 +107,30 @@ const Registration = () => {
       }),
 
     form16:
-      radioButtonValues && radioButtonValues.panOrformDetails === "form16"
+      radioButtonValues && radioButtonValues.panOrForm16 === "form16"
         ? yup
             .mixed()
             .test("required", "File requires", (value) => {
               return value[0];
             })
-            .test("fileSize", "File Size is too large", (value) => {
-              return value[0] && value[0].size <= FILE_SIZE;
-            })
             .test("fileType", "Unsupported File Format", (value) => {
               return value[0] && SUPPORTED_FORMATS.includes(value[0].type);
             })
+            .test("fileSize", "File Size is too large", (value) => {
+              return value[0] && value[0].size <= FILE_SIZE;
+            })
         : "",
 
-    panNo:
-      radioButtonValues && radioButtonValues.panOrformDetails == "panNo"
+    panNumber:
+      radioButtonValues && radioButtonValues.panOrForm16 == "Pan"
         ? yup.string().required("Please enter your PAN number.")
         : "",
-    phoneNumber: yup
+    phone: yup
       .mixed()
       .test("Number", "Please enter a value in Number", (value) => {
         return !isNaN(value);
       }),
-    mobileNumber: yup
+    mobile: yup
       .mixed()
       .test("Required", "Please enter your Mobile Number", (value) => {
         return value ? true : false;
@@ -128,7 +145,7 @@ const Registration = () => {
       }),
   });
 
-  const { register, errors, handleSubmit } = useForm({
+  const { register, errors, handleSubmit, control, reset } = useForm({
     mode: "onChange",
     resolver: yupResolver(SignupSchema),
   });
@@ -145,9 +162,95 @@ const Registration = () => {
     setRadioButtonValues({ ...values });
   };
 
-  const onSubmit = (data) => {
-    console.log(data);
+  //--onsubmit handler-----
+  const onSubmit = async (data) => {
+    const values = {};
+    for (let keys in data) {
+      if (!(keys === "form16")) {
+        values[keys] = data[keys];
+      }
+      if (
+        keys === "country" ||
+        keys === "state" ||
+        keys === "city" ||
+        keys === "registerAs"
+      ) {
+        values[keys] = data[keys].value;
+      }
+    }
+
+    try {
+      const result = await useJwt.post(`${API_URL}/users`, values);
+      if (radioButtonValues.panOrForm16 === "form16") {
+        const formdata = new FormData();
+        formdata.append("docForm16", data.form16[0]);
+        const formResult = await useJwt.post(
+          `${API_URL}/users/doc/${result.data._id}`,
+          formdata
+        );
+        console.log(result.data);
+        console.log(formResult.data);
+        return;
+      }
+      console.log(result.data);
+    } catch (error) {
+      console.log(error.message);
+    }
   };
+
+  //---------form reset----------
+  const handleFormReset = () => {
+    setRadioButtonValues({ panOrForm16: "Pan" });
+    reset({
+      email: "",
+      confirmEmail: "",
+      password: "",
+      confirmPassword: "",
+      firstName: "",
+      lastName: "",
+      fatherOrHusbandName: "",
+      address1: "",
+      address2: "",
+      country: "",
+      state: "",
+      city: "",
+      registerAs: "",
+      pincode: "",
+      panNumber: "",
+      phone: "",
+      mobile: "",
+      faxNumber: "",
+    });
+  };
+
+  //--------country options---------
+  const countryOptions = [
+    { value: "", label: "Select" },
+    { value: "India", label: "India" },
+  ];
+
+  //---------state options---------
+  const stateOptions = [
+    { value: "", label: "Select" },
+    { value: "Assam", label: "Assam" },
+    { value: "Bhiar", label: "Bhiar" },
+    { value: "Tamil Nadu", label: "Tamil Nadu" },
+  ];
+
+  //-------------city options-----------
+  const cityOptions = [
+    { value: "", label: "Select" },
+    { value: "Chennai", label: "Chennai" },
+    { value: "Madurai", label: "Madurai" },
+    { value: "Sivaganga", label: "Sivaganga" },
+  ];
+
+  //-------------RegisterAs options--------
+  const registerAsOptions = [
+    { value: "", label: "Select" },
+    { value: "Individual", label: "Individual" },
+    { value: "Organization", label: "Organization" },
+  ];
 
   return (
     <div className="auth-wrapper auth-v1 px-2">
@@ -161,17 +264,17 @@ const Registration = () => {
               <Row>
                 <Col md="6" sm="12">
                   <FormGroup>
-                    <Label for="emailId">Email ID (Login ID)</Label>
+                    <Label for="email">Email ID (Login ID)</Label>
                     <Input
-                      id="emailId"
+                      id="email"
                       type="email"
-                      name="emailId"
+                      name="email"
                       innerRef={register({ required: true })}
-                      invalid={errors.emailId && true}
+                      invalid={errors.email && true}
                       placeholder="bruce.wayne@email.com"
                     />
-                    {errors && errors.emailId && (
-                      <FormFeedback>{errors.emailId.message}</FormFeedback>
+                    {errors && errors.email && (
+                      <FormFeedback>{errors.email.message}</FormFeedback>
                     )}
                   </FormGroup>
                 </Col>
@@ -195,19 +298,17 @@ const Registration = () => {
                   <FormGroup>
                     <Label for="password">Password</Label>
                     <InputPassword
-                      className="input-group-merge"
+                      className={classnames("input-group-merge", {
+                        "is-invalid": errors.password && true,
+                      })}
                       id="password"
                       name="password"
                       innerRef={register({ required: true })}
                       invalid={errors.password && true}
                     />
+
                     {errors && errors.password && (
-                      <div
-                        className="invalid-feedback"
-                        style={{ display: "unset" }}
-                      >
-                        {errors.password.message}
-                      </div>
+                      <FormFeedback>{errors.password.message}</FormFeedback>
                     )}
                   </FormGroup>
                 </Col>
@@ -215,19 +316,18 @@ const Registration = () => {
                   <FormGroup>
                     <Label for="confirmPassword">Confirm Password</Label>
                     <InputPassword
-                      className="input-group-merge"
+                      className={classnames("input-group-merge", {
+                        "is-invalid": errors.confirmPassword && true,
+                      })}
                       name="confirmPassword"
                       id="confirmPassword"
                       innerRef={register({ required: true })}
                       invalid={errors.confirmPassword && true}
                     />
                     {errors && errors.confirmPassword && (
-                      <div
-                        className="invalid-feedback"
-                        style={{ display: "unset" }}
-                      >
+                      <FormFeedback>
                         {errors.confirmPassword.message}
-                      </div>
+                      </FormFeedback>
                     )}
                   </FormGroup>
                 </Col>
@@ -314,7 +414,7 @@ const Registration = () => {
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="country">Country</Label>
-                    <Input
+                    {/* <Input
                       type="select"
                       name="country"
                       id="country"
@@ -323,7 +423,20 @@ const Registration = () => {
                     >
                       <option value="">Select</option>
                       <option value="india">India</option>
-                    </Input>
+                    </Input> */}
+                    <Controller
+                      as={Select}
+                      id="country"
+                      control={control}
+                      name="country"
+                      options={countryOptions}
+                      defaultValue={countryOptions[0]}
+                      className={classnames("react-select", {
+                        "is-invalid": errors.country && true,
+                      })}
+                      classNamePrefix="select"
+                      theme={selectThemeColors}
+                    />
                     {errors && errors.country && (
                       <FormFeedback>{errors.country.message}</FormFeedback>
                     )}
@@ -332,18 +445,20 @@ const Registration = () => {
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="state">State</Label>
-                    <Input
-                      type="select"
-                      name="state"
+                    <Controller
+                      as={Select}
                       id="state"
-                      innerRef={register({ required: true })}
-                      invalid={errors.state && true}
-                    >
-                      <option value="">Select</option>
-                      <option value="Assam">Assam</option>
-                      <option value="Bihar">Bihar</option>
-                      <option value="Tamil Nadu">Tamil Nadu</option>
-                    </Input>
+                      control={control}
+                      name="state"
+                      options={stateOptions}
+                      defaultValue={stateOptions[0]}
+                      className={classnames("react-select", {
+                        "is-invalid": errors.state && true,
+                      })}
+                      classNamePrefix="select"
+                      theme={selectThemeColors}
+                    />
+
                     {errors && errors.state && (
                       <FormFeedback>{errors.state.message}</FormFeedback>
                     )}
@@ -352,18 +467,20 @@ const Registration = () => {
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="city">City</Label>
-                    <Input
-                      type="select"
-                      name="city"
+                    <Controller
+                      as={Select}
                       id="city"
-                      innerRef={register({ required: true })}
-                      invalid={errors.city && true}
-                    >
-                      <option value="">Select</option>
-                      <option value="Chennai">Chennai</option>
-                      <option value="Madurai">Madurai</option>
-                      <option value="Sivaganga">Sivaganga</option>
-                    </Input>
+                      control={control}
+                      name="city"
+                      options={cityOptions}
+                      defaultValue={cityOptions[0]}
+                      className={classnames("react-select", {
+                        "is-invalid": errors.city && true,
+                      })}
+                      classNamePrefix="select"
+                      theme={selectThemeColors}
+                    />
+
                     {errors && errors.city && (
                       <FormFeedback>{errors.city.message}</FormFeedback>
                     )}
@@ -372,17 +489,20 @@ const Registration = () => {
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="registerAs">Register As </Label>
-                    <Input
-                      type="select"
-                      name="registerAs"
+                    <Controller
+                      as={Select}
                       id="registerAs"
-                      innerRef={register({ required: true })}
-                      invalid={errors.registerAs && true}
-                    >
-                      <option value="">Select</option>
-                      <option value="Organization">Organization</option>
-                      <option value="Individual">Individual</option>
-                    </Input>
+                      control={control}
+                      name="registerAs"
+                      options={registerAsOptions}
+                      defaultValue={registerAsOptions[0]}
+                      className={classnames("react-select", {
+                        "is-invalid": errors.registerAs && true,
+                      })}
+                      classNamePrefix="select"
+                      theme={selectThemeColors}
+                    />
+
                     {errors && errors.registerAs && (
                       <FormFeedback>{errors.registerAs.message}</FormFeedback>
                     )}
@@ -390,18 +510,18 @@ const Registration = () => {
                 </Col>
                 <Col md="6" sm="12">
                   <FormGroup>
-                    <Label for="pinOrZip">Pin/Zip</Label>
+                    <Label for="pincode">Pin/Zip</Label>
                     <Input
-                      id="pinOrZip"
-                      name="pinOrZip"
+                      id="pincode"
+                      name="pincode"
                       type="number"
                       innerRef={register({ required: true })}
-                      invalid={errors.pinOrZip && true}
+                      invalid={errors.pincode && true}
                       placeholder="Pin / Zip"
                       onKeyDown={blockInvalidChar}
                     />
-                    {errors && errors.pinOrZip && (
-                      <FormFeedback>{errors.pinOrZip.message}</FormFeedback>
+                    {errors && errors.pincode && (
+                      <FormFeedback>{errors.pincode.message}</FormFeedback>
                     )}
                   </FormGroup>
                 </Col>
@@ -412,27 +532,30 @@ const Registration = () => {
                       <CustomInput
                         type="radio"
                         id="PanNoRadioButton"
-                        name="panOrformDetails"
+                        name="panOrForm16"
                         inline
                         label="PAN No."
-                        defaultChecked
-                        value="panNo"
+                        checked={radioButtonValues.panOrForm16 === "Pan"}
+                        value="Pan"
+                        innerRef={register}
                         onChange={onChangeRegistrationHandler}
                       />
                       <CustomInput
                         type="radio"
                         id="form16RadioButton"
-                        name="panOrformDetails"
+                        name="panOrForm16"
                         inline
+                        checked={radioButtonValues.panOrForm16 === "form16"}
                         label="Form-16"
                         value="form16"
+                        innerRef={register}
                         onChange={onChangeRegistrationHandler}
                       />
                     </div>
                   </FormGroup>
                 </Col>
                 {radioButtonValues &&
-                  radioButtonValues.panOrformDetails === "form16" && (
+                  radioButtonValues.panOrForm16 === "form16" && (
                     <Col md="6" sm="12">
                       <FormGroup>
                         <Label for="form16">Form 16</Label>
@@ -450,55 +573,54 @@ const Registration = () => {
                       </FormGroup>
                     </Col>
                   )}
-                {radioButtonValues &&
-                  radioButtonValues.panOrformDetails === "panNo" && (
-                    <Col md="6" sm="12">
-                      <FormGroup>
-                        <Label for="panNo">PAN No</Label>
-                        <Input
-                          id="panNo"
-                          name="panNo"
-                          innerRef={register({ required: true })}
-                          invalid={errors.panNo && true}
-                          placeholder="PAN Number"
-                        />
-                        {errors && errors.panNo && (
-                          <FormFeedback>{errors.panNo.message}</FormFeedback>
-                        )}
-                      </FormGroup>
-                    </Col>
-                  )}
+                {radioButtonValues && radioButtonValues.panOrForm16 === "Pan" && (
+                  <Col md="6" sm="12">
+                    <FormGroup>
+                      <Label for="panNumber">PAN No</Label>
+                      <Input
+                        id="panNumber"
+                        name="panNumber"
+                        innerRef={register({ required: true })}
+                        invalid={errors.panNumber && true}
+                        placeholder="PAN Number"
+                      />
+                      {errors && errors.panNumber && (
+                        <FormFeedback>{errors.panNumber.message}</FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                )}
                 <Col md="6" sm="12">
                   <FormGroup>
-                    <Label for="phoneNumber">Phone Number</Label>
+                    <Label for="phone">Phone Number</Label>
                     <Input
-                      id="phoneNumber"
-                      name="phoneNumber"
+                      id="phone"
+                      name="phone"
                       type="number"
                       innerRef={register({ required: true })}
-                      invalid={errors.phoneNumber && true}
+                      invalid={errors.phone && true}
                       placeholder="Phone Number"
                       onKeyDown={blockInvalidChar}
                     />
-                    {errors && errors.phoneNumber && (
-                      <FormFeedback>{errors.phoneNumber.message}</FormFeedback>
+                    {errors && errors.phone && (
+                      <FormFeedback>{errors.phone.message}</FormFeedback>
                     )}
                   </FormGroup>
                 </Col>
                 <Col md="6" sm="12">
                   <FormGroup>
-                    <Label for="mobileNumber">Mobile Number</Label>
+                    <Label for="mobile">Mobile Number</Label>
                     <Input
-                      id="mobileNumber"
-                      name="mobileNumber"
+                      id="mobile"
+                      name="mobile"
                       type="number"
                       innerRef={register({ required: true })}
-                      invalid={errors.mobileNumber && true}
+                      invalid={errors.mobile && true}
                       placeholder="Mobile Number"
                       onKeyDown={blockInvalidChar}
                     />
-                    {errors && errors.mobileNumber && (
-                      <FormFeedback>{errors.mobileNumber.message}</FormFeedback>
+                    {errors && errors.mobile && (
+                      <FormFeedback>{errors.mobile.message}</FormFeedback>
                     )}
                   </FormGroup>
                 </Col>
@@ -527,7 +649,11 @@ const Registration = () => {
                     >
                       Submit
                     </Button.Ripple>
-                    <Button.Ripple outline color="secondary" type="reset">
+                    <Button.Ripple
+                      outline
+                      color="secondary"
+                      onClick={handleFormReset}
+                    >
                       Reset
                     </Button.Ripple>
                   </FormGroup>

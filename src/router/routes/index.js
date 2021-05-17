@@ -21,6 +21,21 @@ const Routes = [
     },
   },
   {
+    path: "/add-advertisement",
+    exact: true,
+    component: lazy(() => import("../../views/CreateUpdateAdvertisement")),
+  },
+  {
+    path: "/update-advertisement/:id",
+    exact: true,
+    component: lazy(() => import("../../views/CreateUpdateAdvertisement")),
+  },
+
+  {
+    path: "/advertisement",
+    component: lazy(() => import("../../views/ViewAdvertisement")),
+  },
+  {
     path: "/forgot-password",
     component: lazy(() => import("../../views/ForgotPassword")),
     layout: "BlankLayout",
@@ -36,13 +51,14 @@ const Routes = [
       authRoute: true,
     },
   },
-  {
-    path: "/second-page",
-    component: lazy(() => import("../../views/SecondPage")),
-  },
+
   {
     path: "/my-profile-edit",
     component: lazy(() => import("../../views/EditProfile")),
+  },
+  {
+    path: "/my-profile",
+    component: lazy(() => import("../../views/ViewProfile")),
   },
   {
     path: "/login",
