@@ -29,6 +29,9 @@ const initialState = {
   firstName: "",
   lastName: "",
   fatherOrHusbandName: "",
+  orgName: "",
+  authorizedPerson: "",
+  designation: "",
   address1: "",
   address2: "",
   country: "",
@@ -47,8 +50,9 @@ const EditProfile = () => {
   const history = useHistory();
 
   const [userValues, setUserValues] = useState(initialState);
-  const [radioButtonValues, setRadioButtonValues] = useState({
+  const [registrationValues, setRegistrationValues] = useState({
     panOrForm16: "Pan",
+    registerAs: "Individual",
   });
 
   //--setting file size----
@@ -65,11 +69,32 @@ const EditProfile = () => {
 
   //-----schema type for validation--------
   const SignupSchema = yup.object().shape({
-    firstName: yup.string().required("Please enter your First Name").min(3),
-    lastName: yup.string().required("Please enter your Last Name").min(3),
-    fatherOrHusbandName: yup
-      .string()
-      .required("Please enter your Father's / Husband Name"),
+    firstName:
+      registrationValues &&
+      registrationValues.registerAs === "Individual" &&
+      yup.string().required("Please enter your First Name").min(3),
+    lastName:
+      registrationValues &&
+      registrationValues.registerAs === "Individual" &&
+      yup.string().required("Please enter your Last Name").min(3),
+    fatherOrHusbandName:
+      registrationValues &&
+      registrationValues.registerAs === "Individual" &&
+      yup.string().required("Please enter your Father's / Husband Name"),
+    orgName:
+      registrationValues &&
+      registrationValues.registerAs === "Organization" &&
+      yup
+        .string()
+        .required("Please enter your Please enter your Organization Name"),
+    authorizedPerson:
+      registrationValues &&
+      registrationValues.registerAs === "Organization" &&
+      yup.string().required("Please enter your Please enter Authorized Person"),
+    designation:
+      registrationValues &&
+      registrationValues.registerAs === "Organization" &&
+      yup.string().required("Please enter your Please enter your Designation"),
     address1: yup.string().required("Please enter your Address"),
     address2: yup.string(),
     country: yup
@@ -100,7 +125,7 @@ const EditProfile = () => {
       }),
 
     form16:
-      radioButtonValues && radioButtonValues.panOrForm16 === "form16"
+      registrationValues && registrationValues.panOrForm16 === "form16"
         ? yup
             .mixed()
             .test("required", "File requires", (value) => {
@@ -115,7 +140,7 @@ const EditProfile = () => {
         : "",
 
     panNumber:
-      radioButtonValues && radioButtonValues.panOrForm16 == "Pan"
+      registrationValues && registrationValues.panOrForm16 == "Pan"
         ? yup.string().required("Please enter your PAN number.")
         : "",
     phone: yup
@@ -179,7 +204,10 @@ const EditProfile = () => {
       try {
         const result = await useJwt.get(`${API_URL}/users/${userId}`);
         console.log(result.data);
-        setRadioButtonValues({ panOrForm16: result.data.panOrForm16 });
+        setRegistrationValues({
+          panOrForm16: result.data.panOrForm16,
+          registerAs: result.data.registerAs,
+        });
         setUserValues({
           ...userValues,
           ...result.data,
@@ -217,9 +245,16 @@ const EditProfile = () => {
         city: cityOptions.filter(
           (option) => option.value === userValues.city
         )[0],
-        registerAs: registerAsOptions.filter(
-          (option) => option.value === userValues.registerAs
-        )[0],
+        // firstName: userValues.firstName,
+        // lastName: userValues.lastName,
+        // fatherOrHusbandName: userValues.fatherOrHusbandName,
+        // address1: userValues.address1,
+        // address2: userValues.address2,
+        // pincode: userValues.pincode,
+        // panNumber: userValues.panNumber,
+        // phone: userValues.phone,
+        // mobile: userValues.mobile,
+        // faxNumber: userValues.faxNumber,
       });
       // for (let keys in userValues) {
       // if (keys === "country") {
@@ -263,9 +298,9 @@ const EditProfile = () => {
   //---onChange handler-------
   const onChangeRegistrationHandler = (e) => {
     const { name, value } = e.target;
-    const values = radioButtonValues;
+    const values = registrationValues;
     values[name] = value;
-    setRadioButtonValues({ ...values });
+    setRegistrationValues({ ...values });
   };
 
   const onSubmit = async (data) => {
@@ -275,30 +310,25 @@ const EditProfile = () => {
       if (!(keys === "form16")) {
         values[keys] = data[keys];
       }
-      if (
-        keys === "country" ||
-        keys === "state" ||
-        keys === "city" ||
-        keys === "registerAs"
-      ) {
+      if (keys === "country" || keys === "state" || keys === "city") {
         values[keys] = data[keys].value;
       }
     }
-
-    try {
-      const result = await useJwt.put(`${API_URL}/users/${userId}`, values);
-      if (radioButtonValues.panOrForm16 === "form16") {
-        const formdata = new FormData();
-        formdata.append("docForm16", data.form16[0]);
-        const formResult = await useJwt.post(
-          `${API_URL}/users/doc/${result.data._id}`,
-          formdata
-        );
-      }
-      history.push("/my-profile");
-    } catch (error) {
-      console.log(error.message);
-    }
+    console.log(data);
+    // try {
+    //   const result = await useJwt.put(`${API_URL}/users/${userId}`, values);
+    //   if (registrationValues.panOrForm16 === "form16") {
+    //     const formdata = new FormData();
+    //     formdata.append("docForm16", data.form16[0]);
+    //     const formResult = await useJwt.post(
+    //       `${API_URL}/users/doc/${result.data._id}`,
+    //       formdata
+    //     );
+    //   }
+    //   history.push("/my-profile");
+    // } catch (error) {
+    //   console.log(error.message);
+    // }
   };
 
   return (
@@ -309,58 +339,120 @@ const EditProfile = () => {
       <CardBody>
         <Form onSubmit={handleSubmit(onSubmit)}>
           <Row>
-            <Col md="6" sm="12">
-              <FormGroup>
-                <Label for="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  defaultValue={userValues.firstName}
-                  innerRef={register({ required: true })}
-                  invalid={errors.firstName && true}
-                  placeholder="Bruce"
-                />
-                {errors && errors.firstName && (
-                  <FormFeedback>{errors.firstName.message}</FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="6" sm="12">
-              <FormGroup>
-                <Label for="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  defaultValue={userValues.lastName}
-                  innerRef={register({ required: true })}
-                  invalid={errors.lastName && true}
-                  placeholder="Wayne"
-                />
-                {errors && errors.lastName && (
-                  <FormFeedback>{errors.lastName.message}</FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="6" sm="12">
-              <FormGroup>
-                <Label for="fatherOrHusbandName">
-                  Father's/Husband's Name{" "}
-                </Label>
-                <Input
-                  id="fatherOrHusbandName"
-                  name="fatherOrHusbandName"
-                  defaultValue={userValues.fatherOrHusbandName}
-                  innerRef={register({ required: true })}
-                  invalid={errors.fatherOrHusbandName && true}
-                  placeholder="Father's / Husband Name"
-                />
-                {errors && errors.fatherOrHusbandName && (
-                  <FormFeedback>
-                    {errors.fatherOrHusbandName.message}
-                  </FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
+            {registrationValues &&
+              registrationValues.registerAs === "Individual" && (
+                <>
+                  <Col md="6" sm="12">
+                    <FormGroup>
+                      <Label for="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        defaultValue={userValues.firstName}
+                        innerRef={register({ required: true })}
+                        invalid={errors.firstName && true}
+                        placeholder="Bruce"
+                      />
+                      {errors && errors.firstName && (
+                        <FormFeedback>{errors.firstName.message}</FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                  <Col md="6" sm="12">
+                    <FormGroup>
+                      <Label for="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        defaultValue={userValues.lastName}
+                        innerRef={register({ required: true })}
+                        invalid={errors.lastName && true}
+                        placeholder="Wayne"
+                      />
+                      {errors && errors.lastName && (
+                        <FormFeedback>{errors.lastName.message}</FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                  <Col md="6" sm="12">
+                    <FormGroup>
+                      <Label for="fatherOrHusbandName">
+                        Father's/Husband's Name{" "}
+                      </Label>
+                      <Input
+                        id="fatherOrHusbandName"
+                        name="fatherOrHusbandName"
+                        defaultValue={userValues.fatherOrHusbandName}
+                        innerRef={register({ required: true })}
+                        invalid={errors.fatherOrHusbandName && true}
+                        placeholder="Father's / Husband Name"
+                      />
+                      {errors && errors.fatherOrHusbandName && (
+                        <FormFeedback>
+                          {errors.fatherOrHusbandName.message}
+                        </FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                </>
+              )}
+            {registrationValues &&
+              registrationValues.registerAs === "Organization" && (
+                <>
+                  <Col md="6" sm="12">
+                    <FormGroup>
+                      <Label for="orgName">Organization Name</Label>
+                      <Input
+                        id="orgName"
+                        name="orgName"
+                        defaultValue={userValues.orgName}
+                        innerRef={register({ required: true })}
+                        invalid={errors.orgName && true}
+                        placeholder="Organization Name"
+                      />
+                      {errors && errors.orgName && (
+                        <FormFeedback>{errors.orgName.message}</FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                  <Col md="6" sm="12">
+                    <FormGroup>
+                      <Label for="authorizedPerson">Authorized Person</Label>
+                      <Input
+                        id="authorizedPerson"
+                        name="authorizedPerson"
+                        defaultValue={userValues.authorizedPerson}
+                        innerRef={register({ required: true })}
+                        invalid={errors.authorizedPerson && true}
+                        placeholder="Authorized Person"
+                      />
+                      {errors && errors.authorizedPerson && (
+                        <FormFeedback>
+                          {errors.authorizedPerson.message}
+                        </FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                  <Col md="6" sm="12">
+                    <FormGroup>
+                      <Label for="designation">Designation</Label>
+                      <Input
+                        id="designation"
+                        name="designation"
+                        defaultValue={userValues.designation}
+                        innerRef={register({ required: true })}
+                        invalid={errors.designation && true}
+                        placeholder="Designation"
+                      />
+                      {errors && errors.designation && (
+                        <FormFeedback>
+                          {errors.designation.message}
+                        </FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                </>
+              )}
             <Col md="6" sm="12">
               <FormGroup>
                 <Label for="address1">Address 1</Label>
@@ -513,46 +605,6 @@ const EditProfile = () => {
             </Col>
             <Col md="6" sm="12">
               <FormGroup>
-                <Label for="registerAs">Register As </Label>
-                {/* <Input
-                  type="select"
-                  name="registerAs"
-                  id="registerAs"
-                  value={userValues.registerAs}
-                  innerRef={register({ required: true })}
-                  invalid={errors.registerAs && true}
-                  onChange={(e) => null}
-                >
-                  <option value="">Select</option>
-                  <option value="Organization">Organization</option>
-                  <option value="Individual">Individual</option>
-                </Input> */}
-                <Controller
-                  as={Select}
-                  id="registerAs"
-                  control={control}
-                  name="registerAs"
-                  options={registerAsOptions}
-                  defaultValue={registerAsOptions[0]}
-                  // value={
-                  //   countryOptions.filter(
-                  //     (option) => option.value === userValues.registerAs
-                  //   )[0]
-                  // }
-
-                  className={classnames("react-select", {
-                    "is-invalid": errors.registerAs && true,
-                  })}
-                  classNamePrefix="select"
-                  theme={selectThemeColors}
-                />
-                {errors && errors.registerAs && (
-                  <FormFeedback>{errors.registerAs.message}</FormFeedback>
-                )}
-              </FormGroup>
-            </Col>
-            <Col md="6" sm="12">
-              <FormGroup>
                 <Label for="pincode">Pin/Zip</Label>
                 <Input
                   id="pincode"
@@ -579,8 +631,8 @@ const EditProfile = () => {
                     name="panOrForm16"
                     inline
                     checked={
-                      radioButtonValues &&
-                      radioButtonValues.panOrForm16 === "Pan"
+                      registrationValues &&
+                      registrationValues.panOrForm16 === "Pan"
                     }
                     label="PAN No."
                     value="Pan"
@@ -593,8 +645,8 @@ const EditProfile = () => {
                     name="panOrForm16"
                     inline
                     checked={
-                      radioButtonValues &&
-                      radioButtonValues.panOrForm16 === "form16"
+                      registrationValues &&
+                      registrationValues.panOrForm16 === "form16"
                     }
                     label="Form-16"
                     value="form16"
@@ -604,7 +656,7 @@ const EditProfile = () => {
                 </div>
               </FormGroup>
             </Col>
-            {radioButtonValues && radioButtonValues.panOrForm16 === "form16" && (
+            {registrationValues && registrationValues.panOrForm16 === "form16" && (
               <Col md="6" sm="12">
                 <FormGroup>
                   <Label for="form16">Form 16</Label>
@@ -622,7 +674,7 @@ const EditProfile = () => {
                 </FormGroup>
               </Col>
             )}
-            {radioButtonValues && radioButtonValues.panOrForm16 === "Pan" && (
+            {registrationValues && registrationValues.panOrForm16 === "Pan" && (
               <Col md="6" sm="12">
                 <FormGroup>
                   <Label for="panNumber">PAN No</Label>

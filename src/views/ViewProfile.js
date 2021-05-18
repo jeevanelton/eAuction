@@ -18,6 +18,9 @@ const initialState = {
   firstName: "",
   lastName: "",
   fatherOrHusbandName: "",
+  orgName: "",
+  authorizedPerson: "",
+  designation: "",
   address1: "",
   address2: "",
   country: "",
@@ -108,6 +111,43 @@ const ViewProfile = () => {
             </Row>
           </dl>
         )}
+        {userValues.orgName && (
+          <dl>
+            <Row>
+              <Col sm="3">
+                <dt>Orgainzation Name</dt>
+              </Col>
+              <Col sm="9">
+                <dd>{userValues.orgName}</dd>
+              </Col>
+            </Row>
+          </dl>
+        )}
+        {userValues.authorizedPerson && (
+          <dl>
+            <Row>
+              <Col sm="3">
+                <dt>Authorized Person</dt>
+              </Col>
+              <Col sm="9">
+                <dd>{userValues.authorizedPerson}</dd>
+              </Col>
+            </Row>
+          </dl>
+        )}
+        {userValues.designation && (
+          <dl>
+            <Row>
+              <Col sm="3">
+                <dt>Designation</dt>
+              </Col>
+              <Col sm="9">
+                <dd>{userValues.designation}</dd>
+              </Col>
+            </Row>
+          </dl>
+        )}
+
         {userValues.mobile && (
           <dl>
             <Row>

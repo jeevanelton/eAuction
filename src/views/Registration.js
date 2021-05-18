@@ -28,8 +28,9 @@ import { Link, useHistory } from "react-router-dom";
 const Registration = () => {
   const history = useHistory();
 
-  const [radioButtonValues, setRadioButtonValues] = useState({
+  const [registrationValues, setRegistrationValues] = useState({
     panOrForm16: "Pan",
+    registerAs: "Individual",
   });
 
   //--setting file size----
@@ -74,11 +75,32 @@ const Registration = () => {
           .string()
           .oneOf([yup.ref("password")], "Password doesn't match"),
       }),
-    firstName: yup.string().required("Please enter your First Name").min(3),
-    lastName: yup.string().required("Please enter your Last Name").min(3),
-    fatherOrHusbandName: yup
-      .string()
-      .required("Please enter your Father's / Husband Name"),
+    firstName:
+      registrationValues &&
+      registrationValues.registerAs === "Individual" &&
+      yup.string().required("Please enter your First Name").min(3),
+    lastName:
+      registrationValues &&
+      registrationValues.registerAs === "Individual" &&
+      yup.string().required("Please enter your Last Name").min(3),
+    fatherOrHusbandName:
+      registrationValues &&
+      registrationValues.registerAs === "Individual" &&
+      yup.string().required("Please enter your Father's / Husband Name"),
+    orgName:
+      registrationValues &&
+      registrationValues.registerAs === "Organization" &&
+      yup
+        .string()
+        .required("Please enter your Please enter your Organization Name"),
+    authorizedPerson:
+      registrationValues &&
+      registrationValues.registerAs === "Organization" &&
+      yup.string().required("Please enter your Please enter Authorized Person"),
+    designation:
+      registrationValues &&
+      registrationValues.registerAs === "Organization" &&
+      yup.string().required("Please enter your Please enter your Designation"),
     address1: yup.string().required("Please enter your Address"),
     address2: yup.string(),
     country: yup
@@ -109,7 +131,7 @@ const Registration = () => {
       }),
 
     form16:
-      radioButtonValues && radioButtonValues.panOrForm16 === "form16"
+      registrationValues && registrationValues.panOrForm16 === "form16"
         ? yup
             .mixed()
             .test("required", "File requires", (value) => {
@@ -124,7 +146,7 @@ const Registration = () => {
         : "",
 
     panNumber:
-      radioButtonValues && radioButtonValues.panOrForm16 == "Pan"
+      registrationValues && registrationValues.panOrForm16 == "Pan"
         ? yup.string().required("Please enter your PAN number.")
         : "",
     phone: yup
@@ -159,9 +181,10 @@ const Registration = () => {
   //---onChange handler-------
   const onChangeRegistrationHandler = (e) => {
     const { name, value } = e.target;
-    const values = radioButtonValues;
+
+    const values = registrationValues;
     values[name] = value;
-    setRadioButtonValues({ ...values });
+    setRegistrationValues({ ...values });
   };
 
   //--onsubmit handler-----
@@ -183,7 +206,7 @@ const Registration = () => {
 
     try {
       const result = await useJwt.post(`${API_URL}/users`, values);
-      if (radioButtonValues.panOrForm16 === "form16") {
+      if (registrationValues.panOrForm16 === "form16") {
         const formdata = new FormData();
         formdata.append("docForm16", data.form16[0]);
         const formResult = await useJwt.post(
@@ -191,6 +214,7 @@ const Registration = () => {
           formdata
         );
       }
+      console.log(result.data);
       history.push("/login");
     } catch (error) {
       console.log(error.message);
@@ -199,7 +223,7 @@ const Registration = () => {
 
   //---------form reset----------
   const handleFormReset = () => {
-    setRadioButtonValues({ panOrForm16: "Pan" });
+    setRegistrationValues({ panOrForm16: "Pan", registerAs: "Individual" });
     reset({
       email: "",
       confirmEmail: "",
@@ -208,6 +232,9 @@ const Registration = () => {
       firstName: "",
       lastName: "",
       fatherOrHusbandName: "",
+      orgName: "",
+      authorizedPerson: "",
+      designation: "",
       address1: "",
       address2: "",
       country: "",
@@ -261,6 +288,42 @@ const Registration = () => {
           <CardBody>
             <Form onSubmit={handleSubmit(onSubmit)}>
               <Row>
+                <Col md="12" lg="12" sm="12">
+                  <FormGroup>
+                    <Label for="registerAs">Register As </Label>
+                    <Controller
+                      render={(props) => (
+                        <Select
+                          id="registerAs"
+                          name={props.name}
+                          value={props.value}
+                          options={registerAsOptions}
+                          className={classnames("react-select", {
+                            "is-invalid": errors.registerAs && true,
+                          })}
+                          classNamePrefix="select"
+                          theme={selectThemeColors}
+                          onChange={(e, { name }) => {
+                            props.onChange(e);
+                            onChangeRegistrationHandler({
+                              target: {
+                                name,
+                                value: e.value,
+                              },
+                            });
+                          }}
+                        />
+                      )}
+                      control={control}
+                      name="registerAs"
+                      defaultValue={registerAsOptions[0]}
+                    />
+
+                    {errors && errors.registerAs && (
+                      <FormFeedback>{errors.registerAs.message}</FormFeedback>
+                    )}
+                  </FormGroup>
+                </Col>
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="email">Email ID (Login ID)</Label>
@@ -331,55 +394,122 @@ const Registration = () => {
                   </FormGroup>
                 </Col>
 
-                <Col md="6" sm="12">
-                  <FormGroup>
-                    <Label for="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      innerRef={register({ required: true })}
-                      invalid={errors.firstName && true}
-                      placeholder="Bruce"
-                    />
-                    {errors && errors.firstName && (
-                      <FormFeedback>{errors.firstName.message}</FormFeedback>
-                    )}
-                  </FormGroup>
-                </Col>
-                <Col md="6" sm="12">
-                  <FormGroup>
-                    <Label for="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      innerRef={register({ required: true })}
-                      invalid={errors.lastName && true}
-                      placeholder="Wayne"
-                    />
-                    {errors && errors.lastName && (
-                      <FormFeedback>{errors.lastName.message}</FormFeedback>
-                    )}
-                  </FormGroup>
-                </Col>
-                <Col md="6" sm="12">
-                  <FormGroup>
-                    <Label for="fatherOrHusbandName">
-                      Father's/Husband's Name{" "}
-                    </Label>
-                    <Input
-                      id="fatherOrHusbandName"
-                      name="fatherOrHusbandName"
-                      innerRef={register({ required: true })}
-                      invalid={errors.fatherOrHusbandName && true}
-                      placeholder="Father's / Husband Name"
-                    />
-                    {errors && errors.fatherOrHusbandName && (
-                      <FormFeedback>
-                        {errors.fatherOrHusbandName.message}
-                      </FormFeedback>
-                    )}
-                  </FormGroup>
-                </Col>
+                {registrationValues &&
+                  registrationValues.registerAs === "Individual" && (
+                    <>
+                      <Col md="6" sm="12">
+                        <FormGroup>
+                          <Label for="firstName">First Name</Label>
+                          <Input
+                            id="firstName"
+                            name="firstName"
+                            innerRef={register({ required: true })}
+                            invalid={errors.firstName && true}
+                            placeholder="Bruce"
+                          />
+                          {errors && errors.firstName && (
+                            <FormFeedback>
+                              {errors.firstName.message}
+                            </FormFeedback>
+                          )}
+                        </FormGroup>
+                      </Col>
+                      <Col md="6" sm="12">
+                        <FormGroup>
+                          <Label for="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            name="lastName"
+                            innerRef={register({ required: true })}
+                            invalid={errors.lastName && true}
+                            placeholder="Wayne"
+                          />
+                          {errors && errors.lastName && (
+                            <FormFeedback>
+                              {errors.lastName.message}
+                            </FormFeedback>
+                          )}
+                        </FormGroup>
+                      </Col>
+                      <Col md="6" sm="12">
+                        <FormGroup>
+                          <Label for="fatherOrHusbandName">
+                            Father's/Husband's Name{" "}
+                          </Label>
+                          <Input
+                            id="fatherOrHusbandName"
+                            name="fatherOrHusbandName"
+                            innerRef={register({ required: true })}
+                            invalid={errors.fatherOrHusbandName && true}
+                            placeholder="Father's / Husband Name"
+                          />
+                          {errors && errors.fatherOrHusbandName && (
+                            <FormFeedback>
+                              {errors.fatherOrHusbandName.message}
+                            </FormFeedback>
+                          )}
+                        </FormGroup>
+                      </Col>
+                    </>
+                  )}
+                {registrationValues &&
+                  registrationValues.registerAs === "Organization" && (
+                    <>
+                      <Col md="6" sm="12">
+                        <FormGroup>
+                          <Label for="orgName">Organization Name</Label>
+                          <Input
+                            id="orgName"
+                            name="orgName"
+                            innerRef={register({ required: true })}
+                            invalid={errors.orgName && true}
+                            placeholder="Organization Name"
+                          />
+                          {errors && errors.orgName && (
+                            <FormFeedback>
+                              {errors.orgName.message}
+                            </FormFeedback>
+                          )}
+                        </FormGroup>
+                      </Col>
+                      <Col md="6" sm="12">
+                        <FormGroup>
+                          <Label for="authorizedPerson">
+                            Authorized Person
+                          </Label>
+                          <Input
+                            id="authorizedPerson"
+                            name="authorizedPerson"
+                            innerRef={register({ required: true })}
+                            invalid={errors.authorizedPerson && true}
+                            placeholder="Authorized Person"
+                          />
+                          {errors && errors.authorizedPerson && (
+                            <FormFeedback>
+                              {errors.authorizedPerson.message}
+                            </FormFeedback>
+                          )}
+                        </FormGroup>
+                      </Col>
+                      <Col md="6" sm="12">
+                        <FormGroup>
+                          <Label for="designation">Designation</Label>
+                          <Input
+                            id="designation"
+                            name="designation"
+                            innerRef={register({ required: true })}
+                            invalid={errors.designation && true}
+                            placeholder="Designation"
+                          />
+                          {errors && errors.designation && (
+                            <FormFeedback>
+                              {errors.designation.message}
+                            </FormFeedback>
+                          )}
+                        </FormGroup>
+                      </Col>
+                    </>
+                  )}
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="address1">Address 1</Label>
@@ -485,28 +615,7 @@ const Registration = () => {
                     )}
                   </FormGroup>
                 </Col>
-                <Col md="6" sm="12">
-                  <FormGroup>
-                    <Label for="registerAs">Register As </Label>
-                    <Controller
-                      as={Select}
-                      id="registerAs"
-                      control={control}
-                      name="registerAs"
-                      options={registerAsOptions}
-                      defaultValue={registerAsOptions[0]}
-                      className={classnames("react-select", {
-                        "is-invalid": errors.registerAs && true,
-                      })}
-                      classNamePrefix="select"
-                      theme={selectThemeColors}
-                    />
 
-                    {errors && errors.registerAs && (
-                      <FormFeedback>{errors.registerAs.message}</FormFeedback>
-                    )}
-                  </FormGroup>
-                </Col>
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="pincode">Pin/Zip</Label>
@@ -534,7 +643,7 @@ const Registration = () => {
                         name="panOrForm16"
                         inline
                         label="PAN No."
-                        checked={radioButtonValues.panOrForm16 === "Pan"}
+                        checked={registrationValues.panOrForm16 === "Pan"}
                         value="Pan"
                         innerRef={register}
                         onChange={onChangeRegistrationHandler}
@@ -544,7 +653,7 @@ const Registration = () => {
                         id="form16RadioButton"
                         name="panOrForm16"
                         inline
-                        checked={radioButtonValues.panOrForm16 === "form16"}
+                        checked={registrationValues.panOrForm16 === "form16"}
                         label="Form-16"
                         value="form16"
                         innerRef={register}
@@ -553,8 +662,8 @@ const Registration = () => {
                     </div>
                   </FormGroup>
                 </Col>
-                {radioButtonValues &&
-                  radioButtonValues.panOrForm16 === "form16" && (
+                {registrationValues &&
+                  registrationValues.panOrForm16 === "form16" && (
                     <Col md="6" sm="12">
                       <FormGroup>
                         <Label for="form16">Form 16</Label>
@@ -572,23 +681,26 @@ const Registration = () => {
                       </FormGroup>
                     </Col>
                   )}
-                {radioButtonValues && radioButtonValues.panOrForm16 === "Pan" && (
-                  <Col md="6" sm="12">
-                    <FormGroup>
-                      <Label for="panNumber">PAN No</Label>
-                      <Input
-                        id="panNumber"
-                        name="panNumber"
-                        innerRef={register({ required: true })}
-                        invalid={errors.panNumber && true}
-                        placeholder="PAN Number"
-                      />
-                      {errors && errors.panNumber && (
-                        <FormFeedback>{errors.panNumber.message}</FormFeedback>
-                      )}
-                    </FormGroup>
-                  </Col>
-                )}
+                {registrationValues &&
+                  registrationValues.panOrForm16 === "Pan" && (
+                    <Col md="6" sm="12">
+                      <FormGroup>
+                        <Label for="panNumber">PAN No</Label>
+                        <Input
+                          id="panNumber"
+                          name="panNumber"
+                          innerRef={register({ required: true })}
+                          invalid={errors.panNumber && true}
+                          placeholder="PAN Number"
+                        />
+                        {errors && errors.panNumber && (
+                          <FormFeedback>
+                            {errors.panNumber.message}
+                          </FormFeedback>
+                        )}
+                      </FormGroup>
+                    </Col>
+                  )}
                 <Col md="6" sm="12">
                   <FormGroup>
                     <Label for="phone">Phone Number</Label>
