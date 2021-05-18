@@ -294,11 +294,8 @@ const EditProfile = () => {
           `${API_URL}/users/doc/${result.data._id}`,
           formdata
         );
-        console.log(result.data);
-        console.log(formResult.data);
-        return;
       }
-      console.log(result.data);
+      history.push("/my-profile");
     } catch (error) {
       console.log(error.message);
     }

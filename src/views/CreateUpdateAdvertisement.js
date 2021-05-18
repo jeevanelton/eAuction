@@ -104,7 +104,7 @@ const CreateAdvertisement = () => {
     if (status === "submit") {
       try {
         await useJwt.post(`${API_URL}/advertisements`, values);
-        history.push("/advertisement-table");
+        history.push("/advertisement");
       } catch (error) {
         console.log(error.response.data);
       }
@@ -113,7 +113,7 @@ const CreateAdvertisement = () => {
     if (status === "update") {
       try {
         await useJwt.put(`${API_URL}/advertisements/${params.id}`, values);
-        history.push("/advertisement-table");
+        history.push("/advertisement");
       } catch (error) {
         console.log(error);
       }

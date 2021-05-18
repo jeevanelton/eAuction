@@ -23,9 +23,11 @@ import {
 import { useState } from "react";
 import { API_URL } from "../configs/constants";
 import useJwt from "@src/auth/jwt/useJwt";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 
 const Registration = () => {
+  const history = useHistory();
+
   const [radioButtonValues, setRadioButtonValues] = useState({
     panOrForm16: "Pan",
   });
@@ -188,11 +190,8 @@ const Registration = () => {
           `${API_URL}/users/doc/${result.data._id}`,
           formdata
         );
-        console.log(result.data);
-        console.log(formResult.data);
-        return;
       }
-      console.log(result.data);
+      history.push("/login");
     } catch (error) {
       console.log(error.message);
     }
