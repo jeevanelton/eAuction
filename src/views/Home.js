@@ -1,49 +1,60 @@
-import { Card, CardHeader, CardBody, CardTitle, CardText, CardLink } from 'reactstrap'
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  CardTitle,
+  CardText,
+  CardLink,
+} from "reactstrap";
 
 const Home = () => {
   return (
     <div>
       <Card>
         <CardHeader>
-          <CardTitle>Kick start your project 🚀</CardTitle>
+          <CardTitle>Bank Auctions Made Easy & Convenient</CardTitle>
         </CardHeader>
         <CardBody>
-          <CardText>All the best for your new project.</CardText>
           <CardText>
-            Please make sure to read our{' '}
-            <CardLink
-              href='https://pixinvent.com/demo/vuexy-react-admin-dashboard-template/documentation/'
-              target='_blank'
+            With Bank eAuctions, Banks can create and publish events in few easy
+            steps and monitor the entire process online.
+          </CardText>
+          <CardText>
+            The easy to use interface requires minimal training to the bank
+            users and bidders
+            {/* <CardLink
+              href="https://pixinvent.com/demo/vuexy-react-admin-dashboard-template/documentation/"
+              target="_blank"
             >
               Template Documentation
-            </CardLink>{' '}
-            to understand where to go from here and how to use our template.
+            </CardLink> */}
           </CardText>
         </CardBody>
       </Card>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Want to integrate JWT? 🔒</CardTitle>
         </CardHeader>
         <CardBody>
           <CardText>
-            We carefully crafted JWT flow so you can implement JWT with ease and with minimum efforts.
+            We carefully crafted JWT flow so you can implement JWT with ease and
+            with minimum efforts.
           </CardText>
           <CardText>
-            Please read our{' '}
+            Please read our{" "}
             <CardLink
-              href='https://pixinvent.com/demo/vuexy-react-admin-dashboard-template/documentation/development/auth'
-              target='_blank'
+              href="https://pixinvent.com/demo/vuexy-react-admin-dashboard-template/documentation/development/auth"
+              target="_blank"
             >
               JWT Documentation
-            </CardLink>{' '}
+            </CardLink>{" "}
             to get more out of JWT authentication.
           </CardText>
         </CardBody>
-      </Card>
+      </Card> */}
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

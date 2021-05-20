@@ -20,15 +20,15 @@ import {
   CustomInput,
 } from "reactstrap";
 import { useEffect, useState } from "react";
-import { getUserData } from "../utility/Utils";
-import { API_URL } from "../configs/constants";
+import { getUserData } from "../../utility/Utils";
+import { API_URL } from "../../configs/constants";
 import useJwt from "@src/auth/jwt/useJwt";
 import { useHistory } from "react-router";
 
 const initialState = {
   firstName: "",
   lastName: "",
-  fatherOrHusbandName: "",
+  middleName: "",
   orgName: "",
   authorizedPerson: "",
   designation: "",
@@ -77,10 +77,10 @@ const EditProfile = () => {
       registrationValues &&
       registrationValues.registerAs === "Individual" &&
       yup.string().required("Please enter your Last Name").min(3),
-    fatherOrHusbandName:
+    middleName:
       registrationValues &&
       registrationValues.registerAs === "Individual" &&
-      yup.string().required("Please enter your Father's / Husband Name"),
+      yup.string(),
     orgName:
       registrationValues &&
       registrationValues.registerAs === "Organization" &&
@@ -240,7 +240,7 @@ const EditProfile = () => {
         )[0],
         // firstName: userValues.firstName,
         // lastName: userValues.lastName,
-        // fatherOrHusbandName: userValues.fatherOrHusbandName,
+        // middleName: userValues.middleName,
         // address1: userValues.address1,
         // address2: userValues.address2,
         // pincode: userValues.pincode,
@@ -354,6 +354,22 @@ const EditProfile = () => {
                   </Col>
                   <Col md="6" sm="12">
                     <FormGroup>
+                      <Label for="middleName">Middle Name</Label>
+                      <Input
+                        id="middleName"
+                        name="middleName"
+                        defaultValue={userValues.middleName}
+                        innerRef={register({ required: true })}
+                        invalid={errors.middleName && true}
+                        placeholder="Middle Name"
+                      />
+                      {errors && errors.middleName && (
+                        <FormFeedback>{errors.middleName.message}</FormFeedback>
+                      )}
+                    </FormGroup>
+                  </Col>
+                  <Col md="6" sm="12">
+                    <FormGroup>
                       <Label for="lastName">Last Name</Label>
                       <Input
                         id="lastName"
@@ -365,26 +381,6 @@ const EditProfile = () => {
                       />
                       {errors && errors.lastName && (
                         <FormFeedback>{errors.lastName.message}</FormFeedback>
-                      )}
-                    </FormGroup>
-                  </Col>
-                  <Col md="6" sm="12">
-                    <FormGroup>
-                      <Label for="fatherOrHusbandName">
-                        Father's/Husband's Name{" "}
-                      </Label>
-                      <Input
-                        id="fatherOrHusbandName"
-                        name="fatherOrHusbandName"
-                        defaultValue={userValues.fatherOrHusbandName}
-                        innerRef={register({ required: true })}
-                        invalid={errors.fatherOrHusbandName && true}
-                        placeholder="Father's / Husband Name"
-                      />
-                      {errors && errors.fatherOrHusbandName && (
-                        <FormFeedback>
-                          {errors.fatherOrHusbandName.message}
-                        </FormFeedback>
                       )}
                     </FormGroup>
                   </Col>

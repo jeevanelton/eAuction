@@ -14,7 +14,7 @@ const Routes = [
   },
   {
     path: "/registration",
-    component: lazy(() => import("../../views/Registration")),
+    component: lazy(() => import("../../views/users/Registration")),
     layout: "BlankLayout",
     meta: {
       authRoute: true,
@@ -23,21 +23,21 @@ const Routes = [
   {
     path: "/advertisement/add-advertisement",
     exact: true,
-    component: lazy(() => import("../../views/CreateUpdateAdvertisement")),
+    component: lazy(() => import("../../views/advertisement/CreateUpdateAdvertisement")),
   },
   {
     path: "/advertisement/update-advertisement/:id",
     exact: true,
-    component: lazy(() => import("../../views/CreateUpdateAdvertisement")),
+    component: lazy(() => import("../../views/advertisement/CreateUpdateAdvertisement")),
   },
 
   {
     path: "/advertisement",
-    component: lazy(() => import("../../views/ViewAdvertisement")),
+    component: lazy(() => import("../../views/advertisement/ViewAdvertisement")),
   },
   {
     path: "/forgot-password",
-    component: lazy(() => import("../../views/ForgotPassword")),
+    component: lazy(() => import("../../views/password/ForgotPassword")),
     layout: "BlankLayout",
     meta: {
       authRoute: true,
@@ -45,7 +45,7 @@ const Routes = [
   },
   {
     path: "/reset-password",
-    component: lazy(() => import("../../views/ResetPassword")),
+    component: lazy(() => import("../../views/password/ResetPassword")),
     layout: "BlankLayout",
     meta: {
       authRoute: true,
@@ -54,11 +54,11 @@ const Routes = [
 
   {
     path: "/my-profile/edit",
-    component: lazy(() => import("../../views/EditProfile")),
+    component: lazy(() => import("../../views/users/EditProfile")),
   },
   {
     path: "/my-profile",
-    component: lazy(() => import("../../views/ViewProfile")),
+    component: lazy(() => import("../../views/users/ViewProfile")),
   },
   {
     path: "/login",

@@ -1,5 +1,5 @@
 import * as yup from "yup";
-import { useHistory, useParams } from "react-router-dom";
+import { Link, useHistory, useParams } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import classnames from "classnames";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -18,12 +18,13 @@ import {
   FormFeedback,
 } from "reactstrap";
 import { useEffect, useState } from "react";
-import { API_URL } from "../configs/constants";
+import { API_URL } from "../../configs/constants";
 import Flatpickr from "react-flatpickr";
 import "@styles/react/libs/flatpickr/flatpickr.scss";
 import useJwt from "@src/auth/jwt/useJwt";
 import { isEmptyObject } from "jquery";
 import moment from "moment";
+import LoadingButton from "./LoadingButton";
 
 const CreateAdvertisement = () => {
   const params = useParams();
@@ -32,6 +33,7 @@ const CreateAdvertisement = () => {
 
   const [status, setStatus] = useState("submit");
   const [minMaxTime, setMinMaxTime] = useState({ min: "", max: "" });
+  const [showButtonLoader, setShowButtonLoader] = useState(false);
 
   //-----schema type for validation--------
   const SignupSchema = yup.object().shape({
@@ -97,6 +99,7 @@ const CreateAdvertisement = () => {
 
   //--onsubmit handler-----
   const onSubmit = async (data) => {
+    setShowButtonLoader(true);
     const values = {
       ...data,
       biddingDate: data.biddingDate[0],
@@ -108,8 +111,10 @@ const CreateAdvertisement = () => {
         await useJwt.post(`${API_URL}/advertisements`, values);
         history.push("/advertisement");
       } catch (error) {
-        console.log(error.response.data);
+        setShowButtonLoader(false);
+        console.log(error);
       }
+      setShowButtonLoader(false);
     }
 
     if (status === "update") {
@@ -117,8 +122,10 @@ const CreateAdvertisement = () => {
         await useJwt.put(`${API_URL}/advertisements/${params.id}`, values);
         history.push("/advertisement");
       } catch (error) {
+        setShowButtonLoader(false);
         console.log(error);
       }
+      setShowButtonLoader(false);
     }
   };
 
@@ -327,20 +334,37 @@ const CreateAdvertisement = () => {
                 </Col>
                 <Col sm="12">
                   <FormGroup className="d-flex mb-0">
-                    <Button.Ripple
-                      className="mr-1"
-                      color="primary"
-                      type="submit"
-                    >
-                      {status === "update" ? "Update" : "Submit"}
-                    </Button.Ripple>
-                    <Button.Ripple
-                      outline
-                      color="secondary"
-                      onClick={handleFormReset}
-                    >
-                      Reset
-                    </Button.Ripple>
+                    {showButtonLoader ? (
+                      <LoadingButton />
+                    ) : (
+                      <>
+                        <Button.Ripple
+                          className="mr-1"
+                          color="primary"
+                          type="submit"
+                        >
+                          {status === "update" ? "Update" : "Submit"}
+                        </Button.Ripple>
+                        {status === "update" ? (
+                          <Button.Ripple
+                            tag={Link}
+                            to="/advertisement"
+                            outline
+                            color="secondary"
+                          >
+                            Cancel
+                          </Button.Ripple>
+                        ) : (
+                          <Button.Ripple
+                            outline
+                            color="secondary"
+                            onClick={handleFormReset}
+                          >
+                            Reset
+                          </Button.Ripple>
+                        )}
+                      </>
+                    )}
                   </FormGroup>
                 </Col>
               </Row>

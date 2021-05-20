@@ -4,15 +4,17 @@ import useJwt from "@src/auth/jwt/useJwt";
 const config = useJwt.jwtConfig;
 
 // ** Handle User Login
-export const handleLogin = (data) => (dispatch) => {
-  dispatch({
-    type: "LOGIN",
-    data,
-    // config,
-  });
+export const handleLogin = (data) => {
+  return (dispatch) => {
+    dispatch({
+      type: "LOGIN",
+      data,
+      // config,
+    });
 
-  // ** Add to user, accessToken & refreshToken to localStorage
-  localStorage.setItem("userData", JSON.stringify(data));
+    // ** Add to user, accessToken & refreshToken to localStorage
+    localStorage.setItem("userData", JSON.stringify(data));
+  };
 };
 
 // ** Handle User Logout

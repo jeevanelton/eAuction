@@ -21,7 +21,7 @@ import {
   CustomInput,
 } from "reactstrap";
 import { useState } from "react";
-import { API_URL } from "../configs/constants";
+import { API_URL } from "../../configs/constants";
 import useJwt from "@src/auth/jwt/useJwt";
 import { Link, useHistory } from "react-router-dom";
 
@@ -83,10 +83,10 @@ const Registration = () => {
       registrationValues &&
       registrationValues.registerAs === "Individual" &&
       yup.string().required("Please enter your Last Name").min(3),
-    fatherOrHusbandName:
+    middleName:
       registrationValues &&
       registrationValues.registerAs === "Individual" &&
-      yup.string().required("Please enter your Father's / Husband Name"),
+      yup.string(),
     orgName:
       registrationValues &&
       registrationValues.registerAs === "Organization" &&
@@ -229,7 +229,7 @@ const Registration = () => {
       confirmPassword: "",
       firstName: "",
       lastName: "",
-      fatherOrHusbandName: "",
+      middleName: "",
       orgName: "",
       authorizedPerson: "",
       designation: "",
@@ -414,6 +414,23 @@ const Registration = () => {
                       </Col>
                       <Col md="6" sm="12">
                         <FormGroup>
+                          <Label for="middleName">Middle Name</Label>
+                          <Input
+                            id="middleName"
+                            name="middleName"
+                            innerRef={register({ required: true })}
+                            invalid={errors.middleName && true}
+                            placeholder="Middle Name"
+                          />
+                          {errors && errors.middleName && (
+                            <FormFeedback>
+                              {errors.middleName.message}
+                            </FormFeedback>
+                          )}
+                        </FormGroup>
+                      </Col>
+                      <Col md="6" sm="12">
+                        <FormGroup>
                           <Label for="lastName">Last Name</Label>
                           <Input
                             id="lastName"
@@ -425,25 +442,6 @@ const Registration = () => {
                           {errors && errors.lastName && (
                             <FormFeedback>
                               {errors.lastName.message}
-                            </FormFeedback>
-                          )}
-                        </FormGroup>
-                      </Col>
-                      <Col md="6" sm="12">
-                        <FormGroup>
-                          <Label for="fatherOrHusbandName">
-                            Father's/Husband's Name{" "}
-                          </Label>
-                          <Input
-                            id="fatherOrHusbandName"
-                            name="fatherOrHusbandName"
-                            innerRef={register({ required: true })}
-                            invalid={errors.fatherOrHusbandName && true}
-                            placeholder="Father's / Husband Name"
-                          />
-                          {errors && errors.fatherOrHusbandName && (
-                            <FormFeedback>
-                              {errors.fatherOrHusbandName.message}
                             </FormFeedback>
                           )}
                         </FormGroup>
