@@ -90,9 +90,7 @@ const Registration = () => {
     orgName:
       registrationValues &&
       registrationValues.registerAs === "Organization" &&
-      yup
-        .string()
-        .required("Please enter your Please enter your Organization Name"),
+      yup.string().required("Please enter your Organization Name"),
     authorizedPerson:
       registrationValues &&
       registrationValues.registerAs === "Organization" &&

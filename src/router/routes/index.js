@@ -21,12 +21,12 @@ const Routes = [
     },
   },
   {
-    path: "/add-advertisement",
+    path: "/advertisement/add-advertisement",
     exact: true,
     component: lazy(() => import("../../views/CreateUpdateAdvertisement")),
   },
   {
-    path: "/update-advertisement/:id",
+    path: "/advertisement/update-advertisement/:id",
     exact: true,
     component: lazy(() => import("../../views/CreateUpdateAdvertisement")),
   },
@@ -53,7 +53,7 @@ const Routes = [
   },
 
   {
-    path: "/my-profile-edit",
+    path: "/my-profile/edit",
     component: lazy(() => import("../../views/EditProfile")),
   },
   {

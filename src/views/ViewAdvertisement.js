@@ -44,14 +44,14 @@ const ViewAdvertisement = () => {
   };
 
   const handleEdit = async (id) => {
-    history.push(`/update-advertisement/${id}`);
+    history.push(`/advertisement/update-advertisement/${id}`);
   };
 
   return (
     <Fragment>
       <Button.Ripple
         tag={Link}
-        to="/add-advertisement"
+        to="/advertisement/add-advertisement"
         className="mr-1 mb-2"
         color="primary"
       >

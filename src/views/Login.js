@@ -161,7 +161,7 @@ const Login = () => {
               to="/"
               onClick={(e) => e.preventDefault()}
             >
-              <svg viewBox="0 0 139 95" version="1.1" height="28">
+              {/* <svg viewBox="0 0 139 95" version="1.1" height="28">
                 <defs>
                   <linearGradient
                     x1="100%"
@@ -233,8 +233,8 @@ const Login = () => {
                     </g>
                   </g>
                 </g>
-              </svg>
-              <h2 className="brand-text text-primary ml-1">Vuexy</h2>
+              </svg> */}
+              <h2 className="brand-text text-primary ml-1">Rosemallow</h2>
             </Link>
             <CardTitle tag="h2" className="font-weight-bold mb-1">
               Welcome to E-Auction!

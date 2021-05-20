@@ -43,7 +43,6 @@ const ViewProfile = () => {
     async function fetchData() {
       try {
         const result = await useJwt.get(`${API_URL}/users/${userId}`);
-        console.log(result.data);
 
         setUserValues({
           ...userValues,
@@ -222,13 +221,9 @@ const ViewProfile = () => {
         )}
         <Button.Ripple
           tag={Link}
-          to="/my-profile-edit"
+          to="/my-profile/edit"
           className="mr-1"
           color="primary"
-          onClick={(e) => {
-            console.log("clicked");
-            return;
-          }}
         >
           Edit
         </Button.Ripple>

@@ -7,6 +7,7 @@ import Avatar from "@components/avatar";
 
 // ** Utils
 import { isUserLoggedIn } from "@utils";
+import { getUserData } from "../../../../utility/Utils";
 
 // ** Store & Actions
 import { useDispatch } from "react-redux";
@@ -31,7 +32,13 @@ import {
 } from "react-feather";
 
 // ** Default Avatar Image
-import defaultAvatar from "@src/assets/images/portrait/small/avatar-s-11.jpg";
+import defaultAvatar from "@src/assets/images/portrait/small/avatar-s-27.jpg";
+
+// ** Axios
+import useJwt from "@src/auth/jwt/useJwt";
+
+// API url
+import { API_URL } from "../../../../configs/constants";
 
 const UserDropdown = () => {
   // ** Store Vars
@@ -43,7 +50,17 @@ const UserDropdown = () => {
   //** ComponentDidMount
   useEffect(() => {
     if (isUserLoggedIn() !== null) {
-      setUserData(JSON.parse(localStorage.getItem("userData")));
+      const { userId } = getUserData();
+      async function fetchData() {
+        try {
+          const result = await useJwt.get(`${API_URL}/users/${userId}`);
+          setUserData(result.data);
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      fetchData();
+      // setUserData(JSON.parse(localStorage.getItem("userData")));
     }
   }, []);
 
@@ -60,11 +77,15 @@ const UserDropdown = () => {
       >
         <div className="user-nav d-sm-flex d-none">
           <span className="user-name font-weight-bold">
-            {(userData && userData["username"]) || "John Doe"}
+            {(userData &&
+              ((userData["firstName"] &&
+                `${userData["firstName"]} ${userData["lastName"]}`) ||
+                userData["authorizedPerson"])) ||
+              "John Doe"}
           </span>
-          <span className="user-status">
+          {/* <span className="user-status">
             {(userData && userData.role) || "Admin"}
-          </span>
+          </span> */}
         </div>
         <Avatar img={userAvatar} imgHeight="40" imgWidth="40" status="online" />
       </DropdownToggle>

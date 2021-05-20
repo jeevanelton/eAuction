@@ -23,6 +23,7 @@ import Flatpickr from "react-flatpickr";
 import "@styles/react/libs/flatpickr/flatpickr.scss";
 import useJwt from "@src/auth/jwt/useJwt";
 import { isEmptyObject } from "jquery";
+import moment from "moment";
 
 const CreateAdvertisement = () => {
   const params = useParams();
@@ -30,6 +31,7 @@ const CreateAdvertisement = () => {
   const history = useHistory();
 
   const [status, setStatus] = useState("submit");
+  const [minMaxTime, setMinMaxTime] = useState({ min: "", max: "" });
 
   //-----schema type for validation--------
   const SignupSchema = yup.object().shape({
@@ -222,6 +224,9 @@ const CreateAdvertisement = () => {
                               "is-invalid": errors.biddingDate ? true : false,
                             })}
                             value={props.value}
+                            options={{
+                              minDate: new Date(),
+                            }}
                           />
                         );
                       }}
@@ -243,7 +248,13 @@ const CreateAdvertisement = () => {
                       render={(props) => {
                         return (
                           <Flatpickr
-                            onChange={props.onChange}
+                            onChange={(e) => {
+                              props.onChange(e);
+                              setMinMaxTime({
+                                ...minMaxTime,
+                                min: moment(e[0]).format("HH:mm"),
+                              });
+                            }}
                             className={classnames("form-control", {
                               "is-invalid": errors.biddingStartTime
                                 ? true
@@ -251,6 +262,7 @@ const CreateAdvertisement = () => {
                             })}
                             value={props.value}
                             options={{
+                              maxTime: minMaxTime.max,
                               enableTime: true,
                               noCalendar: true,
                               dateFormat: "H:i",
@@ -278,7 +290,13 @@ const CreateAdvertisement = () => {
                       render={(props) => {
                         return (
                           <Flatpickr
-                            onChange={props.onChange}
+                            onChange={(e) => {
+                              props.onChange(e);
+                              setMinMaxTime({
+                                ...minMaxTime,
+                                max: moment(e[0]).format("HH:mm"),
+                              });
+                            }}
                             className={classnames("form-control", {
                               "is-invalid": errors.biddingEndTime
                                 ? true
@@ -286,6 +304,7 @@ const CreateAdvertisement = () => {
                             })}
                             value={props.value}
                             options={{
+                              minTime: minMaxTime.min,
                               enableTime: true,
                               noCalendar: true,
                               dateFormat: "H:i",

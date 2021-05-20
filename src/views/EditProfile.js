@@ -84,9 +84,7 @@ const EditProfile = () => {
     orgName:
       registrationValues &&
       registrationValues.registerAs === "Organization" &&
-      yup
-        .string()
-        .required("Please enter your Please enter your Organization Name"),
+      yup.string().required("Please enter your Organization Name"),
     authorizedPerson:
       registrationValues &&
       registrationValues.registerAs === "Organization" &&
@@ -108,11 +106,6 @@ const EditProfile = () => {
     city: yup
       .mixed()
       .test("Required", "Please select your Country", (value) => {
-        return value.value ? true : false;
-      }),
-    registerAs: yup
-      .mixed()
-      .test("Required", "Please select your Registered As", (value) => {
         return value.value ? true : false;
       }),
     pincode: yup
@@ -314,21 +307,22 @@ const EditProfile = () => {
         values[keys] = data[keys].value;
       }
     }
-    console.log(data);
-    // try {
-    //   const result = await useJwt.put(`${API_URL}/users/${userId}`, values);
-    //   if (registrationValues.panOrForm16 === "form16") {
-    //     const formdata = new FormData();
-    //     formdata.append("docForm16", data.form16[0]);
-    //     const formResult = await useJwt.post(
-    //       `${API_URL}/users/doc/${result.data._id}`,
-    //       formdata
-    //     );
-    //   }
-    //   history.push("/my-profile");
-    // } catch (error) {
-    //   console.log(error.message);
-    // }
+
+    try {
+      const result = await useJwt.put(`${API_URL}/users/${userId}`, values);
+      if (registrationValues.panOrForm16 === "form16") {
+        const formdata = new FormData();
+        formdata.append("docForm16", data.form16[0]);
+        const formResult = await useJwt.post(
+          `${API_URL}/users/doc/${result.data._id}`,
+          formdata
+        );
+      }
+      console.log(result.data);
+      history.push("/my-profile");
+    } catch (error) {
+      console.log(error.message);
+    }
   };
 
   return (
